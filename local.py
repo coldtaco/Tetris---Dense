@@ -113,26 +113,22 @@ except Exception:
     generations = initializeModels()
             
 def reset():
+    print('entered reset')
     try:
-        intake = eval(",".join(open('saves/DInput.txt').readlines()))
-        output = eval(",".join(open('saves/DOutput.txt').readlines()))
+        intake = np.loadtxt('saves/DInput.npy',dtype='float32')
+        output = np.loadtxt('saves/DOutput.npy',dtype='float32')
+        intake = np.vstack([intake,lastGen.p1.intake,lastGen.p2.intake])
+        output = np.vstack([intake,lastGen.p1.output,lastGen.p2.output])
     except:
         traceback.print_exc()
-        intake , output = [] , []
-    intake += lastGen.p1.intake
-    intake += lastGen.p2.intake
-    output += lastGen.p1.output
-    output += lastGen.p2.output
-    shuffled = list(zip(intake,output))
-    del intake, output
-    random.shuffle(shuffled)
-    if len(shuffled) < 1500000:
-        intake,output = list(zip(*shuffled))
-    else:
-        intake,output = list(zip(*shuffled[:1500000]))
-    open("saves/DInput.txt",'w').write(str(intake))
-    open("saves/DOutput.txt",'w').write(str(output))
-    intake,output = np.array(intake), np.array(output)
+        intake = np.vstack([lastGen.p1.intake,lastGen.p2.intake])
+        output = np.vstack([lastGen.p1.output,lastGen.p2.output])
+    p = numpy.random.permutation(output.shape[0])
+    intake,output = intake[p],output[p]
+    if output.shape[0] > 1500000:
+        intake,output = intake[:1500000], output[:1500000]
+    np.save("saves/DInput.npy",intake)
+    np.save("saves/DOutput.npy",output)
     tempSpecies = Species(newModel(),intake,output,mChance)
     tempSpecies.create()
     gen = Generation(tempSpecies.base,[],[],mChance)
