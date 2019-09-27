@@ -111,40 +111,11 @@ except Exception:
     traceback.print_exc()
     print("Couldn't find save files... Initializing models")
     generations = initializeModels()
-            
-def reset():
-    try:
-        intake = eval(",".join(open('saves/DInput.txt').readlines()))
-        output = eval(",".join(open('saves/DOutput.txt').readlines()))
-    except:
-        traceback.print_exc()
-        intake , output = [] , []
-    intake += lastGen.p1.intake
-    intake += lastGen.p2.intake
-    output += lastGen.p1.output
-    output += lastGen.p2.output
-    shuffled = list(zip(intake,output))
-    del intake, output
-    random.shuffle(shuffled)
-    if len(shuffled) < 1500000:
-        intake,output = list(zip(*shuffled))
-    else:
-        intake,output = list(zip(*shuffled[:1500000]))
-    open("saves/DInput.txt",'w').write(str(intake))
-    open("saves/DOutput.txt",'w').write(str(output))
-    intake,output = np.array(intake), np.array(output)
-    tempSpecies = Species(newModel(),intake,output,mChance)
-    tempSpecies.create()
-    gen = Generation(tempSpecies.base,[],[],mChance)
-    return gen
 
 for i in range(100):
     lastGen = generations
     txt = open('tetris.log','a')
-    if (i + totalGen) % 10 == 0:
-        gen = reset()
-    else:
-        gen = Generation(lastGen.base,mChance)
+    gen = Generation(lastGen.base,mChance)
     gen.population.append(lastGen.child)
     gen.population[0].addName('Gen {}, Species {}'.format(i+totalGen,'Child'))
     gen.population.append(lastGen.p1)
