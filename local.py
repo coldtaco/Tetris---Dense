@@ -116,8 +116,8 @@ except Exception:
             
 def reset():
     try:
-        intake = np.load('saves/DInput.npy',dtype='float32')
-        output = np.load('saves/DOutput.npy',dtype='float32')
+        intake = np.load('saves/DInput.npy')
+        output = np.load('saves/DOutput.npy')
         intake = np.vstack([intake,lastGen.p1.intake,lastGen.p2.intake])
         output = np.vstack([intake,lastGen.p1.output,lastGen.p2.output])
     except:
