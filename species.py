@@ -12,6 +12,7 @@ class Species:
         self.score = 0
         self.name = None
         self.batch = self.batchSize()
+        self.cleared = 0
 
     def batchSize(self):
         length = len(self.output)
@@ -30,14 +31,17 @@ class Species:
         return 16
 
     def mutate(self):
+        if not isinstance(self.intake,np.ndarray):
+            self.intake = np.array(self.intake)
+        if not isinstance(self.output,np.ndarray):
+            self.output = np.array(self.output)
         #_max = pd.DataFrmae(self.output).sum().idxmax()
         df = pd.DataFrame(self.output)
         rand = random.randint(0,7)
-        for o in range(len(self.output)):
-            if random.choice(range(self.mChance)) == 0:
-                temp = [0,0,0,0,0,0,0,0]
-                temp[rand]=1
-                self.output[o]=temp
+        p = np.random.choice(self.output.shape[0],self.output.shape[0]//self.mChance,replace=False)
+        temp = [0,0,0,0,0,0,0,0]
+        temp[rand]=1
+        self.output[p] = np.array(temp)
                 
     def evolve(self):
         self.mutate()
@@ -47,6 +51,10 @@ class Species:
         earlyStop = keras.callbacks.EarlyStopping(monitor='loss', min_delta=0.001, patience=9, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
         rlr = keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.2,patience=7, min_lr=1e-6, mode='auto', verbose=1)
         self.base.fit(np.array(self.intake,dtype='float32'),np.array(self.output,dtype='float32'),validation_split=0.10, epochs=1000, batch_size=self.batch, verbose=2,callbacks=[earlyStop,rlr])
+        if isinstance(self.intake,np.ndarray):
+            self.intake = self.intake.tolist()
+        if isinstance(self.output,np.ndarray):
+            self.output = self.output.tolist()
         return 
         
     def predict(self,intake):
@@ -61,8 +69,9 @@ class Species:
         self.output.append(predict.tolist()[0])
         return np.argmax(predict)
 
-    def addScore(self,score):
-        self.score+=score
+    def addScores(self,game):
+        self.cleared += game.cleared
+        self.score += game.score
 
     def addName(self,name):
         if self.name == None:
@@ -80,16 +89,12 @@ class Generation:
         self.child = None
 
     def saveGen(self):
-        print('Backing up...')    
-        inputs1 = open('saves/inputs1.txt','w')
-        outputs1 = open('saves/outputs1.txt','w')
-        inputs2 = open('saves/inputs2.txt','w')
-        outputs2 = open('saves/outputs2.txt','w')
+        print('Backing up...')
         names = open('saves/names.txt','w')
-        inputs1.write(str(self.p1.intake))
-        outputs1.write(str(self.p1.output))
-        inputs2.write(str(self.p2.intake))
-        outputs2.write(str(self.p2.output))
+        np.save('saves/inputs1',np.array(self.p1.intake))
+        np.save('saves/inputs2',np.array(self.p2.intake))
+        np.save('saves/outputs1',np.array(self.p1.output))
+        np.save('saves/outputs2',np.array(self.p2.output))
         names.write(self.p1.name+"\n")
         names.write(self.p2.name)
         self.p1.base.save('saves/p1.h5')
@@ -103,14 +108,13 @@ class Generation:
     def createChild(self):
         if self.p1 == None or self.p2 == None:
             self.findBest()
+        intake = np.vstack([self.p1.intake,self.p2.intake])
+        output = np.vstack([self.p1.output,self.p2.output])
         shuffled = list(zip(self.p1.intake,self.p1.output))
         random.shuffle(shuffled)
-        intake,output = list(zip(*shuffled[:len(shuffled)*3//4]))
-        shuffled = list(zip(self.p2.intake,self.p2.output))
-        random.shuffle(shuffled)
-        ti,to = list(zip(*shuffled[:len(shuffled)*3//4]))
-        intake += ti
-        output += to
+        p = np.random.permutation(output.shape[0])
+        intake,output = intake[p],output[p]
+        intake,output = intake[:output.shape[0]*3//4],output[:output.shape[0]*3//4]
         child = Species(self.base,list(intake),list(output),self.mChance)
         return child
 
