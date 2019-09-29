@@ -32,9 +32,9 @@ class Species:
 
     def mutate(self):
         if not isinstance(self.intake,np.ndarray):
-            self.intake = np.array(self.intake)
+            self.intake = np.array(self.intake,dtype='int8')
         if not isinstance(self.output,np.ndarray):
-            self.output = np.array(self.output)
+            self.output = np.array(self.output,dtype='float32')
         #_max = pd.DataFrmae(self.output).sum().idxmax()
         df = pd.DataFrame(self.output)
         rand = random.randint(0,7)
