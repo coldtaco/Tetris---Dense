@@ -14,6 +14,7 @@ import traceback
 from tetris import Game
 import sys
 
+linux = False
 if sys.platform == "linux" or sys.platform == "linux2":
     import curses
     linux = True

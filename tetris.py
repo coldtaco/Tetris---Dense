@@ -12,7 +12,7 @@ class Game:
         self.board = board
         self.piece = self.bag.pop()
         self.rotation = 0
-        self.marker = [0,5]
+        self.marker = [-2,5]
         self.hold = None
         self.fall = False
         self.touched  = 0
@@ -22,6 +22,7 @@ class Game:
         self.score = 0
         self.b2b = False
         self.held = False
+        self.hiddenScore = 0
 
     def train(self,inp):
         self.play(inp,False)
@@ -85,17 +86,14 @@ class Game:
             y,x = z
             if x < 0:
                 return True
-            elif x>9:
+            elif x > 9:
                 return True
+            if y < 0:
+                continue
             if y > 19:
                 return True
             if self.board[y][x] == 2:
-                if y > self.marker[0] and (self.board[y][x] == 2 or self.board[y][x] == 2):
-                    return True
-                if x < self.marker[1]:#touching to the left
-                    return True
-                elif x > self.marker[1]:#touching to the right
-                    return True
+                return True
         return False
 
     def newBag(self):#creatse a new bag of tetriminos
@@ -123,10 +121,20 @@ class Game:
             self.score += 1200 if self.b2b else 800
         self.cleared += linesCleared
 
+    def endGame(self):
+        self.running = False
+        hole = 0
+        for y in range(len(self.board)):
+            for x in range(len(self.board[0])):
+                if self.board[y][x] == 0 and y > 0 and self.board[y-1][x] == 2:
+                    hole += 1
+        self.hiddenScore -= hole
+
+
     def setPiece(self):#sets tetrimino in place and resets some info used for tracking it
         for y,x in self.coords:
             if y < 0:
-                self.running = False
+                self.endGame()
                 return
             self.board[y][x] = 2
         self.clear()
@@ -135,16 +143,11 @@ class Game:
         self.piece = self.bag.pop()
         self.rotation = 0
         self.touched = 0
-        self.marker = [0,5]
+        self.marker = [-2,5]
         self.held = False
-        
-        for y,x in self.orientation():
-            if self.board[y][x] == 2:
-                if y < 0:
-                    #print(y,x)
-                    self.running = False
-
-        
+        self.coords = self.orientation()
+        self.running = not self.overlapCheck()
+                
     def play(self,intake,prin = True):
         try:
             if self.running:
@@ -168,20 +171,25 @@ class Game:
     def hardDrop(self):
             orientation = self.orientation()
             lowest = {}
-            lowestPosition = 0
+            lowestPosition = -2
             for y,x in orientation:
                 if x in lowest:
-                    lowest[x] = lowest[x] if y < lowest[x] else y - self.marker[0]
+                    lowest[x] = y - self.marker[0] if lowest[x] < y - self.marker[0] else lowest[x]
                 else:
                     lowest[x] = y - self.marker[0]
                 lowestPosition = y if lowestPosition < y else lowestPosition
             lowestPosition -= self.marker[0]
             keys = list(lowest.keys())
-            '''for y in range(20):
-                for x in range(10):
-                    if self.board[y][x] == 2:
-                        print(f'{y},{x}')'''
-            for y in range(len(self.board)):
+            y_ = self.marker[0]
+            while y_ < 0:
+                for y in lowest.values():
+                    if y < 0:
+                        for x in lowest:
+                            lowest[x] += 1
+                y_ += 1
+            for y in range(len(self.board)+2):
+                if lowest[x] + y < 0:
+                    continue
                 for x in keys:
                     if self.board[lowest[x]+y][x] == 2:
                         self.score += (y - self.marker[0] - 1)*2
@@ -261,8 +269,10 @@ class Game:
         #mechanism for slowly falling, time based solution is inefficient for ML
         self.coords = self.orientation()
         touching = self.checkTouching()
-        if self.fall  and not touching:
+        if self.fall and not touching:
             self.marker[0] += 1
+            if self.overlapCheck():
+                self.marker[0] -= 1
             self.coords = self.orientation()
             touching = self.checkTouching()
         self.fall = not self.fall
@@ -283,7 +293,7 @@ class Game:
     def checkTouching(self):#checks if tetrimino is touching something form the bottom
         for y,x in self.coords:
             try:
-                if y < 0 :
+                if y + 1 < 0:
                     continue
                 if y == 19:
                     return True
@@ -300,8 +310,6 @@ class Game:
             if y < 0:
                 continue
             if tempBoard[y][x] == 2:
-                #print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-                self.running = False
                 continue
             tempBoard[y][x] = 1
         if prin:
@@ -325,10 +333,9 @@ class Game:
                         string +='#'
                     else:
                         string +=' '
-                string += "\n"
+                strings.append(string)
             string += f"Lines cleared : {self.cleared}\n"
             string += f"Score : {self.score}\n"
-            strings.append(string)
             return strings
 
     def orientation(self):#return list of tuples of coordinates of tetrimino when drawn
