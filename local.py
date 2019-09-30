@@ -67,7 +67,7 @@ def playGame(species):
                 game.train(result)
                 printBoard(game.train(result),stdscr)
             score = game.score
-            species.addScore(score)
+            species.addScores(game)
             curses.endwin()
         else:
             game = Game()
@@ -76,25 +76,26 @@ def playGame(species):
                 result = species.predict(board)
                 game.play(result)
             score = game.score
-            species.addScore(score)
+            species.addScores(game)
         print('Got a score of {:.2f}'.format(score))
 
 mChance = 3
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.Session(config=config)
 try:
     genFile = open('gen.txt','r')
     read = genFile.readlines()
     totalGen = int(read[0])+1
     genFile.close()
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    session = tf.Session(config=config)
 except:
-    totalGen=1
+    totalGen=0
+
 try:
-    inputs1 = eval(open('saves/inputs1.txt','r').readlines()[0])
-    outputs1 = eval(open('saves/outputs1.txt','r').readlines()[0])
-    inputs2 = eval(open('saves/inputs2.txt','r').readlines()[0])
-    outputs2 = eval(open('saves/outputs2.txt','r').readlines()[0])
+    inputs1 = np.load('saves/inputs1.npy').tolist()
+    outputs1 = np.load('saves/outputs1.npy').tolist()
+    inputs2 = np.load('saves/inputs2.npy').tolist()
+    outputs2 = np.load('saves/outputs2.npy').tolist()
     modelp1 = load_model('saves/p1.h5')
     modelp2 = load_model('saves/p2.h5')
     names = open('saves/names.txt').readlines()
@@ -108,14 +109,40 @@ try:
     print('Load models successful!')
     print('Continuing at Gen {}'.format(totalGen))
 except Exception:
+    totalGen=0
     traceback.print_exc()
     print("Couldn't find save files... Initializing models")
     generations = initializeModels()
+            
+def reset():
+    try:
+        intake = np.load('saves/DInput.npy')
+        output = np.load('saves/DOutput.npy')
+        intake = np.vstack([intake,lastGen.p1.intake,lastGen.p2.intake])
+        output = np.vstack([intake,lastGen.p1.output,lastGen.p2.output])
+    except:
+        traceback.print_exc()
+        intake = np.vstack([lastGen.p1.intake,lastGen.p2.intake])
+        output = np.vstack([lastGen.p1.output,lastGen.p2.output])
+    p = np.random.permutation(output.shape[0])
+    intake,output = intake[p],output[p]
+    if output.shape[0] > 1500000:
+        intake,output = intake[:1500000], output[:1500000]
+    np.save("saves/DInput.npy",intake)
+    np.save("saves/DOutput.npy",output)
+    tempSpecies = Species(newModel(),intake,output,mChance)
+    tempSpecies.create()
+    gen = Generation(tempSpecies.base,mChance)
+    return gen
 
 for i in range(100):
     lastGen = generations
     txt = open('tetris.log','a')
-    gen = Generation(lastGen.base,mChance)
+    if (i + totalGen) % 10 == 0:
+        gen = reset()
+        lastGen.p1.intake,lastGen.p1.output,lastGen.p2.intake,lastGen.p2.output = [],[],[],[]
+    else:
+        gen = Generation(lastGen.base,mChance)
     gen.population.append(lastGen.child)
     gen.population[0].addName('Gen {}, Species {}'.format(i+totalGen,'Child'))
     gen.population.append(lastGen.p1)
@@ -135,7 +162,7 @@ for i in range(100):
         playGame(species)
         print('For a total of {:.2f}!'.format(species.score))
         gen.population.append(species)
-        txt.write('{}, {}, finished with a score of {:.2f}\n'.format(strftime("%d %b %Y %H:%M:%S", localtime()),species.name,species.score))
+        txt.write('{}, {}, finished with a score of {:.2f}, clearing {} lines\n'.format(strftime("%d %b %Y %H:%M:%S", localtime()),species.name,species.score,species.cleared))
     gen.breed()
     gen.saveGen()
     if (i + totalGen) % 10 == 0:

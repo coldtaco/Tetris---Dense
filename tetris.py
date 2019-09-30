@@ -121,8 +121,7 @@ class Game:
             self.score += 750 if self.b2b else 500
         elif linesCleared == 4:
             self.score += 1200 if self.b2b else 800
-        
-        self.cleared +=1
+        self.cleared += linesCleared
 
     def setPiece(self):#sets tetrimino in place and resets some info used for tracking it
         for y,x in self.coords:
@@ -138,11 +137,13 @@ class Game:
         self.touched = 0
         self.marker = [0,5]
         self.held = False
-        for y,x in self.coords:
+        
+        for y,x in self.orientation():
             if self.board[y][x] == 2:
                 if y < 0:
                     #print(y,x)
                     self.running = False
+
         
     def play(self,intake,prin = True):
         try:
@@ -324,8 +325,10 @@ class Game:
                         string +='#'
                     else:
                         string +=' '
-                string+="\n"
-                strings.append(string)
+                string += "\n"
+            string += f"Lines cleared : {self.cleared}\n"
+            string += f"Score : {self.score}\n"
+            strings.append(string)
             return strings
 
     def orientation(self):#return list of tuples of coordinates of tetrimino when drawn

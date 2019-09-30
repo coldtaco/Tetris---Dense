@@ -1,9 +1,8 @@
 import pandas as pd
-l = ",".join(open('saves/outputs1.txt').readlines())
-l = eval(l)
+import numpy as np
+l = np.load('saves/outputs1.npy')
 df = pd.DataFrame(l)
 print(df.sum()/df.shape[0])
-l = ",".join(open('saves/outputs2.txt').readlines())
-l = eval(l)
+l = np.load('saves/outputs2.npy')
 df = pd.DataFrame(l)
 print(df.sum()/df.shape[0])
