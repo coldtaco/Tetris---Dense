@@ -126,8 +126,9 @@ class Game:
         hole = 0
         for y in range(len(self.board)):
             for x in range(len(self.board[0])):
-                if self.board[y][x] == 0 and y > 0 and self.board[y-1][x] == 2:
+                if self.board[y][x] == 0 and y > 0 and (self.board[y-1][x] == 2 or self.board[y-1][x] == 3):
                     hole += 1
+                    self.board[y][x] = 3
         self.hiddenScore -= hole
 
 

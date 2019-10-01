@@ -120,7 +120,7 @@ def reset():
         intake = np.load('saves/DInput.npy')
         output = np.load('saves/DOutput.npy')
         intake = np.vstack([intake,lastGen.p1.intake,lastGen.p2.intake])
-        output = np.vstack([intake,lastGen.p1.output,lastGen.p2.output])
+        output = np.vstack([output,lastGen.p1.output,lastGen.p2.output])
     except:
         traceback.print_exc()
         intake = np.vstack([lastGen.p1.intake,lastGen.p2.intake])
@@ -141,7 +141,7 @@ for i in range(100):
     txt = open('tetris.log','a')
     if (i + totalGen) % 10 == 0:
         gen = reset()
-        lastGen.p1.intake,lastGen.p1.output,lastGen.p2.intake,lastGen.p2.output = [],[],[],[]
+        lastGen.p1.intake,lastGen.p1.output,lastGen.p2.intake,lastGen.p2.output,lastGen.child.intake,lastGen.child.output = [],[],[],[],[],[]
     else:
         gen = Generation(lastGen.base,mChance)
     gen.population.append(lastGen.child)

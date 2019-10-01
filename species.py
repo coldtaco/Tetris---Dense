@@ -126,7 +126,7 @@ class Generation:
             if m.hiddenScore > bestScore:
                 bestScore = m.hiddenScore
                 index = i
-        return self.population.pop(index)
+        return population.pop(index)
         
 
     def findBest(self):
@@ -138,6 +138,9 @@ class Generation:
             elif x.cleared > bestClear:
                 match = [x]
         self.p1 = self.bestScore(match)
+        for i,s in enumerate(self.population):
+            if s.name == p1.name:
+                self.population.pop(i)
         bestClear = self.population[0].cleared
         match = []
         for x in self.population:
