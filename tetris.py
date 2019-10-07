@@ -3,6 +3,7 @@ import copy
 import traceback
 import sys
 import pandas as pd
+import scoring
 #import curses
 class Game:
     def __init__(self):
@@ -123,14 +124,8 @@ class Game:
 
     def endGame(self):
         self.running = False
-        hole = 0
-        for y in range(len(self.board)):
-            for x in range(len(self.board[0])):
-                if self.board[y][x] == 0 and y > 0 and (self.board[y-1][x] == 2 or self.board[y-1][x] == 3):
-                    hole += 1
-                    self.board[y][x] = 3
-        self.hiddenScore -= hole
-
+        hiddenScore -= scoring.holes(self.board)
+        
 
     def setPiece(self):#sets tetrimino in place and resets some info used for tracking it
         for y,x in self.coords:
@@ -401,6 +396,3 @@ class Game:
                 return ((x,y-1),(x,y),(x-1,y),(x-1,y+1))
             elif self.rotation % 4 == 3:
                 return ((x-1,y-1),(x,y-1),(x,y),(x+1,y))
-
-
-
