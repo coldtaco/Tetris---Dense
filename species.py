@@ -139,7 +139,7 @@ class Generation:
                 match = [x]
         self.p1 = self.bestScore(match)
         for i,s in enumerate(self.population):
-            if s.name == p1.name:
+            if s.name == self.p1.name:
                 self.population.pop(i)
         bestClear = self.population[0].cleared
         match = []
