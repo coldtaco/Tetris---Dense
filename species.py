@@ -13,6 +13,7 @@ class Species:
         self.name = None
         self.batch = self.batchSize()
         self.cleared = 0
+        self.hiddenScore = 0
 
     def batchSize(self):
         length = len(self.output)
@@ -72,10 +73,12 @@ class Species:
     def addScores(self,game):
         self.cleared += game.cleared
         self.score += game.score
+        self.hiddenScore += game.hiddenScore
 
     def addName(self,name):
         if self.name == None:
             self.name = name
+
     def reset(self):
         self.score = 0
 
@@ -110,28 +113,38 @@ class Generation:
             self.findBest()
         intake = np.vstack([self.p1.intake,self.p2.intake])
         output = np.vstack([self.p1.output,self.p2.output])
-        shuffled = list(zip(self.p1.intake,self.p1.output))
-        random.shuffle(shuffled)
         p = np.random.permutation(output.shape[0])
         intake,output = intake[p],output[p]
         intake,output = intake[:output.shape[0]*3//4],output[:output.shape[0]*3//4]
         child = Species(self.base,list(intake),list(output),self.mChance)
         return child
 
-    def findBest(self):
-        bestScore = self.population[0].score
+    def bestScore(self,population):
+        bestScore = population[0].hiddenScore
         index = 0
-        for i,m in enumerate(self.population):
-            if m.score > bestScore:
-                bestScore = m.score
+        for i,m in enumerate(population):
+            if m.hiddenScore > bestScore:
+                bestScore = m.hiddenScore
                 index = i
-        self.p1 = self.population.pop(index)
-        bestScore = self.population[0].score
-        index1 = 0
-        for i,m in enumerate(self.population):
-            if m.score > bestScore:
-                bestScore = m.score
-                index1 = i
-        self.p2 = self.population[index1]
-        self.population.append(self.p1)
+        return population.pop(index)
+        
 
+    def findBest(self):
+        bestClear = self.population[0].cleared
+        match = [self.population[0]]
+        for x in self.population:
+            if x.cleared == bestClear:
+                match.append(x)
+            elif x.cleared > bestClear:
+                match = [x]
+        self.p1 = self.bestScore(match)
+        for i,s in enumerate(self.population):
+            if s.name == self.p1.name:
+                self.population.pop(i)
+        bestClear = self.population[0].cleared
+        match = []
+        for x in self.population:
+            if x.cleared == bestClear:
+                match.append(x)
+        self.p2 = self.bestScore(match)
+        self.population.append(self.p1)
