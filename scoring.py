@@ -42,16 +42,20 @@ def holes(board):
 
 #get uneveness by using standard distance of local columns to column
 def distance(board):
-    lowest = [len(board) - 1 for x in range(len(board[0]))]
+    lowest = [len(board) for x in range(len(board[0]))]
     unchecked = list(range(len(board[0])))
-    print(unchecked)
-    for y in range(len(board)): 
+    for y in range(len(board)):
         if len(unchecked) == 0:
+            print('break')
             break
-        for x in unchecked:
+        for x in list(reversed(unchecked)):
             if board[y][x] == 2:
                 unchecked.remove(x)
-                print(y,x)
                 lowest[x] = y
-    return lowest
-    pass
+    diff = []
+    lowest = np.array(lowest)
+    for x in range(2,len(board[0])-2):
+        tup = lowest[x-2:x+3]
+        diff.append(np.average(np.abs(tup - tup[2])))
+    diff = np.array(diff)*5//3
+    return diff.sum()
