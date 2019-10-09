@@ -46,7 +46,6 @@ def distance(board):
     unchecked = list(range(len(board[0])))
     for y in range(len(board)):
         if len(unchecked) == 0:
-            print('break')
             break
         for x in list(reversed(unchecked)):
             if board[y][x] == 2:

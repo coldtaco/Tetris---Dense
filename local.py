@@ -41,11 +41,11 @@ def initializeModels():
         board = [list(board) for x in range(20)]
         species = Species(model,[board]*2,[[1,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,0]],mChance)
         species.evolve()
-        species.addName('Gen 0, Species {}'.format(i))
+        species.addName(f'Gen 0, Species {i}')
         print(species.name)
         playGame(species)
         generations.population.append(species)
-        print('For a total of {:.2f}!'.format(species.score))
+        print(f'For a total of {species.score:.2f}!')
     generations.breed()
     generations.child.addName('Gen 0, Species Child')
     generations.saveGen()
@@ -59,31 +59,26 @@ def printBoard(board,stdscr):
 
 def playGame(species):
     for x in range(10):
+        game = Game()
         if linux:
-            game = Game()
             stdscr = curses.initscr()
             while game.running:
                 board = game.board
                 result = species.predict(board)
-                game.train(result)
                 printBoard(game.train(result),stdscr)
             score = game.score
             species.addScores(game)
             curses.endwin()
         else:
-            game = Game()
             while game.running:
                 board = game.board
                 result = species.predict(board)
                 game.play(result)
             score = game.score
             species.addScores(game)
-        print('Got a score of {:.2f}'.format(score))
+        print(f'Got a score of {score:.2f}')
 
 mChance = 3
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
-session = tf.Session(config=config)
 try:
     genFile = open('gen.txt','r')
     read = genFile.readlines()
@@ -106,9 +101,9 @@ try:
     generations.p1.addName(names[0])
     generations.p2.addName(names[1])
     generations.breed()
-    generations.child.addName('Gen {}, Species Child'.format(totalGen))
+    generations.child.addName(f'Gen {totalGen}, Species Child')
     print('Load models successful!')
-    print('Continuing at Gen {}'.format(totalGen))
+    print(f'Continuing at Gen {totalGen}')
 except Exception:
     totalGen=0
     traceback.print_exc()
@@ -138,14 +133,13 @@ def reset():
 
 for i in range(100):
     lastGen = generations
-    txt = open('tetris.log','a')
     if (i + totalGen) % 10 == 0:
         gen = reset()
         lastGen.p1.intake,lastGen.p1.output,lastGen.p2.intake,lastGen.p2.output,lastGen.child.intake,lastGen.child.output = [],[],[],[],[],[]
     else:
         gen = Generation(lastGen.base,mChance)
     gen.population.append(lastGen.child)
-    gen.population[0].addName('Gen {}, Species {}'.format(i+totalGen,'Child'))
+    gen.population[0].addName(f'Gen {i+totalGen}, Species Child')
     gen.population.append(lastGen.p1)
     gen.population.append(lastGen.p2)
     for j in gen.population:
@@ -153,25 +147,25 @@ for i in range(100):
         print(" ")
         print(j.name)
         playGame(j)
-        print('For a total of {:.2f}!'.format(j.score))
+        print(f'For a total of {j.score:.2f}!')
     for j in range(5):
         species = lastGen.createChild()
         species.evolve()
         print(" ")
-        species.addName('Gen {}, Species {}'.format(i+totalGen,j))
+        species.addName(f'Gen {i+totalGen}, Species {j}')
         print(species.name)
         playGame(species)
-        print('For a total of {:.2f}!'.format(species.score))
+        print(f'For a total of {species.score:.2f}!')
         gen.population.append(species)
-        txt.write('{}, {}, finished with a score of {:.2f}, clearing {} lines\n'.format(strftime("%d %b %Y %H:%M:%S", localtime()),species.name,species.score,species.cleared))
+        with open('tetris.log','a') as log:
+            log.write(f'{strftime("%d %b %Y %H:%M:%S", localtime())}, {species.name}, finished with a score of {species.score:.2f}, clearing {species.cleared} lines\n')
     gen.breed()
     gen.saveGen()
     if (i + totalGen) % 10 == 0:
         print('Saving best models...')
-        gen.p1.base.save('Models/Gen{}_p1.h5'.format(i+totalGen))
-        gen.p2.base.save('Models/Gen{}_p2.h5'.format(i+totalGen))
+        gen.p1.base.save(f'Models/Gen{i+totalGen}_p1.h5')
+        gen.p2.base.save(f'Models/Gen{i+totalGen}_p2.h5')
     generations = gen
-    genFile = open('gen.txt','w')
-    genFile.write(str(totalGen+i))
-    genFile.close()
+    with open('gen.txt','w') as genFile:
+        genFile.write(str(totalGen+i))
 
