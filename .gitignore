@@ -8,3 +8,4 @@ __pycache__/scoring.cpython-37.pyc
 *.pyc
 scores
 test.py
+crash.log
