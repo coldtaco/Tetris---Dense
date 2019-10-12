@@ -62,14 +62,14 @@ class Species:
         
     def predict(self,intake):
         self.intake.append(intake)
-        predict = self.base.predict(np.array([intake]))
+        predict = self.base.predict(np.array([intake]))[0]
         if random.choice(range(self.mChance)) == 0:
             rand = random.randint(0,7)
             temp = [0,0,0,0,0,0,0,0]
             temp[rand]=1
             self.output.append(temp)
             return rand
-        self.output.append(predict.tolist()[0])
+        self.output.append(predict.tolist())
         return np.argmax(predict)
 
     def addScores(self,game):
@@ -86,7 +86,7 @@ class Species:
 
     def reinPred(self,intake):
         self.intake.append(intake)
-        predict = self.base.predict(np.array([intake]))
+        predict = self.base.predict(np.array([intake]))[0]
         if self.mChance > 0:
             if random.choice(range(self.mChance)) == 0:
                 rand = random.randint(0,7)
