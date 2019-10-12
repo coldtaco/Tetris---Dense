@@ -5,3 +5,6 @@ temp.py
 temp.py
 __pycache__/scoring.cpython-37.pyc
 __pycache__/scoring.cpython-37.pyc
+*.pyc
+scores
+test.py

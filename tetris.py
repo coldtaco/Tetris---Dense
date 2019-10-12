@@ -24,6 +24,8 @@ class Game:
         self.b2b = False
         self.held = False
         self.hiddenScore = 0
+        self.pieces = 0
+        self.lastHeight = 0
 
     def train(self,inp):
         self.play(inp,False)
@@ -105,12 +107,12 @@ class Game:
             
     def clear(self):#clears lines
         linesCleared = 0
-        for i in range(len(self.board)):
-            if 0 not in self.board[19-i] and 1 not in self.board[19-i]:
+        for i,x in enumerate(list(reversed(self.board))):
+            if 0 not in x:
                 linesCleared += 1
             else:
-                self.board[19-i-linesCleared] = self.board[19-i]
-            pass
+                self.board[19-i-linesCleared] = list(x)
+
         self.b2b = False if linesCleared == 0 else True
         if linesCleared == 1:
             self.score += 150 if self.b2b else 100
@@ -124,10 +126,12 @@ class Game:
 
     def endGame(self):
         self.running = False
-        hiddenScore -= scoring.holes(self.board)
+        self.hiddenScore -= scoring.holes(self.board)
         
 
     def setPiece(self):#sets tetrimino in place and resets some info used for tracking it
+        self.pieces += 1
+        self.lastHeight = self.marker[0]
         for y,x in self.coords:
             if y < 0:
                 self.endGame()
@@ -142,8 +146,9 @@ class Game:
         self.marker = [-2,5]
         self.held = False
         self.coords = self.orientation()
-        self.running = not self.overlapCheck()
-                
+        if self.overlapCheck():
+            self.endGame()
+            
     def play(self,intake,prin = True):
         try:
             if self.running:
@@ -213,10 +218,10 @@ class Game:
             string += '\n'
             print("\n",end='')
         crash.write(string)
-        crash.write(str(self.coords))
-        crash.write(str(self.marker))
-        crash.write(str(self.piece))
-        crash.write(str(self.orientation))
+        crash.write(str(self.coords)+'\n')
+        crash.write(str(self.marker)+'\n')
+        crash.write(str(self.piece)+'\n')
+        crash.write(str(self.rotation))
 
     def move(self, intake):
         #[Keys.ARROW_LEFT,Keys.ARROW_RIGHT,Keys.ARROW_UP,Keys.ARROW_DOWN," ","z","c","a"]
@@ -249,7 +254,7 @@ class Game:
             self.rotation -= 1
         elif intake == 6:#hold
             if not self.held:
-                held = True
+                self.held = True
                 hold = self.hold
                 if hold == None:
                     self.hold = self.piece
@@ -260,8 +265,8 @@ class Game:
                     self.hold = self.piece
                     self.piece = hold
                     self.marker = [0,5]
-            elif intake == 7:#rotate 180
-                self.rotation += 2
+        elif intake == 7:#rotate 180
+            self.rotation += 2
         #mechanism for slowly falling, time based solution is inefficient for ML
         self.coords = self.orientation()
         touching = self.checkTouching()
@@ -276,11 +281,6 @@ class Game:
             #print(f'touched {self.touched} times')
             self.touched += 1
         if (self.touched == 3):
-            for y,x in self.coords:
-                if y < 0:
-                    #print(y,x)
-                    self.running =  False
-                    return
             self.checkValid()
             self.setPiece()
             return
