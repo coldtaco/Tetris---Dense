@@ -23,17 +23,18 @@ def bestMove(board,piece):
             elif x - game.marker[1] > rightest:
                 rightest = x - game.marker[1]
         for x in range(0+leftest,len(board[0])-rightest):
+            game.cleared = 0
             game.board = copy.deepcopy(board)
             game.rotation = rotation
             game.marker[1] = x
             game.piece = piece
+            assert game.cleared == 0
             game.train(4)
             score = getScore(game,0)
             if score > bestScore:
                 bestScore = score
                 bestMove = (rotation,x)
-    print(f'best score was {bestScore}')
-    return bestMove
+    return (bestScore,bestMove)
 
 def playGame():
     for x in range(1):
@@ -42,22 +43,20 @@ def playGame():
         game = Game()
         if linux:
             stdscr = curses.initscr()
+        game.train(6)
         while game.running:
-            for result in moveOrder(bestMove(copy.deepcopy(game.board),game.piece),game):
-                print(result)
+            s1,m1 = bestMove(copy.deepcopy(game.board),game.piece)
+            s2,m2 = bestMove(copy.deepcopy(game.board),game.hold)
+            moves = moveOrder(m1,game) if s1 > s2 else moveOrder(m2,game,hold = True)
+            for result in moves:
                 if linux:
                     printBoard(game.train(result),stdscr)
                 else:
-                    #print('executing move')
-                    game.train(result)
-                    #print('----------')
-            cleared = game.cleared
-            print(game.drawBoard(prin=True))
+                    game.play(result)
             piece += 1
         if linux:
             curses.endwin()
-        score = game.score
-        print('Got a score of {:.2f}'.format(score))
+        print(f'Got a score of {game.score:.2f}')
         print(f'cleared {game.cleared} lines')
         print(f'placed {piece} pieces')
 
