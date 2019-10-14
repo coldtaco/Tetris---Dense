@@ -12,6 +12,8 @@ def getScore(game, cleared):
     holes = scoring.holes(board)
     distance = scoring.distance(board)
     lastHeight = game.lastHeight
-    changeCleared = game.cleared - cleared
-    open('scores','a').write(str(8*changeCleared - wells - 4*holes - distance - (19 - lastHeight))+'\n')
-    return 80*changeCleared - wells - 4*holes - distance - 10*(19 - lastHeight)
+    cleared = game.cleared - cleared
+    rowTrans = scoring.rowTransitions(board)
+    colTrans = scoring.colTransitions(board)
+    return 8*cleared - wells - 4*holes - distance - (19 - lastHeight)
+    return cleared - wells - 4*holes - distance - (19 - lastHeight) - rowTrans - colTrans

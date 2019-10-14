@@ -53,8 +53,26 @@ def distance(board):
                 lowest[x] = y
     diff = []
     lowest = np.array(lowest)
+    return np.abs(lowest[0:-1] - lowest[1:]).sum()
     for x in range(2,len(board[0])-2):
         tup = lowest[x-2:x+3]
         diff.append(np.average(np.abs(tup - tup[2])))
     diff = np.array(diff)*5//3
     return diff.sum()
+
+def rowTransitions(board):
+    board = np.array(board)
+    _board = board - 1
+    one = [[1]]*20
+    _board = np.hstack([one,_board,one])/2
+    rowTrans = 0
+    for col in range(len(_board[0])-1):
+        rowTrans += np.sum(_board[:,col] * _board[:,col+1])
+    return rowTrans
+
+def colTransitions(board):
+    board = np.array(board)
+    colTrans = 0
+    for row in range(len(board)-1):
+        colTrans += np.dot(board[row,:], board[row+1,:])
+    return colTrans
