@@ -66,12 +66,6 @@ def moveOrder(bestMove,game,hold=False):
         moves.append(6)
     #[Keys.ARROW_LEFT,Keys.ARROW_RIGHT,Keys.ARROW_UP,Keys.ARROW_DOWN," ","z","c","a"]
     bestRotation, bestX = bestMove
-    if bestX < game.marker[1]:#move left
-        for x in range(game.marker[1] - bestX):
-            moves.append(0)
-    elif game.marker[1] < bestX:#move right
-        for x in range(bestX - game.marker[1]):
-            moves.append(1)
     rotation = bestRotation
     if rotation == 1:
         moves.append(2)
@@ -79,6 +73,12 @@ def moveOrder(bestMove,game,hold=False):
         moves.append(7)
     if rotation == 3:
         moves.append(5)
+    if bestX < game.marker[1]:#move left
+        for x in range(game.marker[1] - bestX):
+            moves.append(0)
+    elif game.marker[1] < bestX:#move right
+        for x in range(bestX - game.marker[1]):
+            moves.append(1)
     moves.append(4)
     return moves
 
