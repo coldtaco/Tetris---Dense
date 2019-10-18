@@ -107,12 +107,15 @@ class Game:
             
     def clear(self):#clears lines
         linesCleared = 0
+        tempBoard = []
         for i,x in enumerate(list(reversed(self.board))):
             if 0 not in x:
                 linesCleared += 1
             else:
-                self.board[19-i-linesCleared] = list(x)
-
+                tempBoard.insert(0,x)
+        for i in range(len(self.board) - len(tempBoard)):
+            tempBoard.insert(0,list([0,0,0,0,0,0,0,0,0,0]))
+            
         self.b2b = False if linesCleared == 0 else True
         if linesCleared == 1:
             self.score += 150 if self.b2b else 100
@@ -123,6 +126,7 @@ class Game:
         elif linesCleared == 4:
             self.score += 1200 if self.b2b else 800
         self.cleared += linesCleared
+        self.board = tempBoard
 
     def endGame(self):
         self.running = False
@@ -197,7 +201,7 @@ class Game:
                         self.marker[0] = y - 1
                         return
                     if lowest[x]+y >= 19 :
-                        self.score = (19 - lowestPosition- self.marker[0])*2
+                        self.score += (19 - lowestPosition- self.marker[0])*2
                         self.marker[0] = 19 - lowestPosition
                         return
 
@@ -329,10 +333,11 @@ class Game:
                         string +='#'
                     else:
                         string +=' '
+                    string +=' '
                 strings.append(string)
-            string += f"Lines cleared : {self.cleared}\n"
-            string += f"Score : {self.score}\n"
-            return strings
+            strings.append(f"Lines cleared : {self.cleared}\n")
+            strings.append(f"Score : {self.score}\n")
+        return strings
 
     def orientation(self):#return list of tuples of coordinates of tetrimino when drawn
         x = self.marker[0]
