@@ -37,6 +37,7 @@ def bestMove(board,piece):
     return (bestScore,bestMove)
 
 def playGame():
+    total = 0
     for x in range(1):
         piece = 0
         cleared = 0
@@ -52,13 +53,21 @@ def playGame():
                 if linux:
                     printBoard(game.train(result),stdscr)
                 else:
-                    game.play(result)
+                    game.move(result)
+                    print(f'lines cleared {game.cleared},score {game.score}',end = '\r')
             piece += 1
         if linux:
             curses.endwin()
-        print(f'Got a score of {game.score:.2f}')
-        print(f'cleared {game.cleared} lines')
-        print(f'placed {piece} pieces')
+        total += game.score
+        stats(game,piece)
+    print(f'For a total of {total:.2f}!')
+
+def stats(game,piece):
+    print(f'Got a score of {game.score:.2f}')
+    print(f'cleared {game.cleared} lines')
+    print(f'placed {piece} pieces')
+    open('algo.log','a').write(f'Got a score of {game.score:.2f}\ncleared {game.cleared} lines\nplaced {piece} pieces\n')
+
 
 def moveOrder(bestMove,game,hold=False):
     moves = []
