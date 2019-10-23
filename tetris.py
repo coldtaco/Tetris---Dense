@@ -174,36 +174,39 @@ class Game:
             sys.exit()
     
     def hardDrop(self):
-            orientation = self.orientation()
-            lowest = {}
-            lowestPosition = -2
-            for y,x in orientation:
-                if x in lowest:
-                    lowest[x] = y - self.marker[0] if lowest[x] < y - self.marker[0] else lowest[x]
-                else:
-                    lowest[x] = y - self.marker[0]
-                lowestPosition = y if lowestPosition < y else lowestPosition
-            lowestPosition -= self.marker[0]
-            keys = list(lowest.keys())
-            y_ = self.marker[0]
-            while y_ < 0:
-                for y in lowest.values():
-                    if y < 0:
-                        for x in lowest:
-                            lowest[x] += 1
-                y_ += 1
-            for y in range(len(self.board)+2):
-                if lowest[x] + y < 0:
-                    continue
-                for x in keys:
-                    if self.board[lowest[x]+y][x] == 2:
-                        self.score += (y - self.marker[0] - 1)*2
-                        self.marker[0] = y - 1
-                        return
-                    if lowest[x]+y >= 19 :
-                        self.score += (19 - lowestPosition- self.marker[0])*2
-                        self.marker[0] = 19 - lowestPosition
-                        return
+        o = self.orientation()
+        lowest = {}
+        lowestPosition = -2
+        for y,x in o:
+            if x in lowest:
+                lowest[x] = y - self.marker[0] if lowest[x] < y - self.marker[0] else lowest[x]
+            else:
+                lowest[x] = y - self.marker[0]
+            lowestPosition = y if lowestPosition < y else lowestPosition
+        lowestPosition -= self.marker[0]
+        keys = list(lowest.keys())
+        y_ = self.marker[0]
+        '''
+        while y_ < 0:
+            for y in lowest.values():
+                if y < 0:
+                    for x in lowest:
+                        lowest[x] += 1
+            y_ += 1'''
+        tBoard = np.array(self.board)
+        cols = []
+        for x in lowest:
+            if lowest[x] >= 0:
+                cols.append(np.roll(np.hstack([tBoard[:,x],2]),-1*lowest[x]))
+            else:
+                t = np.roll(np.hstack([tBoard[:,x],2]),-1*lowest[x])
+                for x in range(-1*lowest[x]):
+                    t[x] = 0
+                t[-1] = 2
+                cols.append(t)
+        cols = [np.argmax(x) - 1 for x in cols]
+        self.marker[0] = min(cols)
+        #self.drawBoard(prin=True)
 
     def dBoard(self,crash):
         tempBoard = copy.deepcopy(self.board)
@@ -337,7 +340,7 @@ class Game:
                 strings.append(string)
             strings.append(f"Lines cleared : {self.cleared}\n")
             strings.append(f"Score : {self.score}\n")
-        return strings
+            return strings
 
     def orientation(self):#return list of tuples of coordinates of tetrimino when drawn
         x = self.marker[0]
