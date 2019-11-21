@@ -404,3 +404,6 @@ class Game:
                 return ((x,y-1),(x,y),(x-1,y),(x-1,y+1))
             elif self.rotation % 4 == 3:
                 return ((x-1,y-1),(x,y-1),(x,y),(x+1,y))
+
+    def __str__(self):
+        return self.drawBoard(False)
