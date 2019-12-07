@@ -31,7 +31,7 @@ class Game:
         self.play(inp,False)
         return self.drawBoard(False)
 
-    def checkValid(self):#corrects position of tetrimino (out of bounds or overlapping)
+    def checkValid(self,times = 0):#corrects position of tetrimino (out of bounds or overlapping)
         changed = False
         for i,z in enumerate(self.coords):
             y,x = z
@@ -82,6 +82,10 @@ class Game:
                         self.coords = self.orientation()
                         y,x = self.coords[i]
                         changed = True
+        if self.overlapCheck():
+            self.marker[0] -= 1
+            if times < 5:
+                self.checkValid(times + 1)
         return
     
     def overlapCheck(self):#checks if there is overlap (does not correct). Used for stopping certain moves
@@ -140,10 +144,14 @@ class Game:
             if y < 0:
                 self.endGame()
                 return
+            assert y >= 0, "y value was " + str(y)
+            assert y <= 19, "y value was " + str(y)
+            assert x >= 0, "x value was " + str(x)
+            assert x <= 9, "x value was " + str(x)
             self.board[y][x] = 2
         self.clear()
-        if len(self.bag) == 0:
-            self.bag = self.newBag()
+        if len(self.bag) < 5:
+            self.bag += self.newBag()
         self.piece = self.bag.pop()
         self.rotation = 0
         self.touched = 0
@@ -174,10 +182,13 @@ class Game:
             sys.exit()
     
     def hardDrop(self):
-        o = self.orientation()
+        orientation = self.orientation()
         lowest = {}
         lowestPosition = -2
-        for y,x in o:
+        for y,x in orientation:
+            assert y <= 19, "y value was " + str(y) + str(orientation)
+            assert x >= 0, "x value was " + str(x) + str(orientation)
+            assert x <= 9, "x value was " + str(x) + str(orientation)
             if x in lowest:
                 lowest[x] = y - self.marker[0] if lowest[x] < y - self.marker[0] else lowest[x]
             else:
@@ -185,28 +196,23 @@ class Game:
             lowestPosition = y if lowestPosition < y else lowestPosition
         lowestPosition -= self.marker[0]
         keys = list(lowest.keys())
-        y_ = self.marker[0]
-        '''
-        while y_ < 0:
-            for y in lowest.values():
-                if y < 0:
-                    for x in lowest:
-                        lowest[x] += 1
-            y_ += 1'''
-        tBoard = np.array(self.board)
-        cols = []
-        for x in lowest:
-            if lowest[x] >= 0:
-                cols.append(np.roll(np.hstack([tBoard[:,x],2]),-1*lowest[x]))
-            else:
-                t = np.roll(np.hstack([tBoard[:,x],2]),-1*lowest[x])
-                for x in range(-1*lowest[x]):
-                    t[x] = 0
-                t[-1] = 2
-                cols.append(t)
-        cols = [np.argmax(x) - 1 for x in cols]
-        self.marker[0] = min(cols)
-        #self.drawBoard(prin=True)
+        y_ = self.marker[0] 
+        for y in range(len(self.board)+2):
+            if lowest[x] + y < 0:
+                continue
+            for x in keys:
+                assert y >= 0, "y value was " + str(y) + " lowest[x] + y = " + str(lowest[x] + y) + " " + str(orientation)
+                assert y <= 19, "y value was " + str(y) + " lowest[x] + y = " + str(lowest[x] + y) + " " + str(orientation)
+                assert x >= 0, "x value was " + str(x) + " lowest[x] + y = " + str(lowest[x] + y) + " " + str(orientation)
+                assert x <= 9, "x value was " + str(x) + " lowest[x] + y = " + str(lowest[x] + y) + " " + str(orientation)
+                if lowest[x]+y >= 19 :
+                    self.score += (19 - lowestPosition- self.marker[0])*2
+                    self.marker[0] = 19 - lowestPosition
+                    return
+                if self.board[lowest[x]+y+1][x] == 2:
+                    self.score += (y - self.marker[0] - 1)*2
+                    self.marker[0] = y
+                    return
 
     def dBoard(self,crash):
         tempBoard = copy.deepcopy(self.board)
@@ -230,9 +236,23 @@ class Game:
         crash.write(str(self.piece)+'\n')
         crash.write(str(self.rotation))
 
+    def xSetter(self,val):
+        #assert val <=9 and val >=0
+        self.marker[1] = val
+        if not (val <= 9 and val >= 0):
+            print(f'Out of bounds with val = {val}')
+            return False
+        ori = self.marker[1]
+        self.marker[1] = val
+        for y,x in self.orientation():
+            if not (x <= 9 and x >= 0):
+                print(f'Out of bounds with val = {val}')
+                return False
+        return True
+
     def move(self, intake):
         #[Keys.ARROW_LEFT,Keys.ARROW_RIGHT,Keys.ARROW_UP,Keys.ARROW_DOWN," ","z","c","a"]
-        # 0 : "I", 1 : "O", 2 : "T", 3 : "J", 4 : "L", 5 : "S", 6 : "Z"
+        # {0 : "I", 1 : "O", 2 : "T", 3 : "J", 4 : "L", 5 : "S", 6 : "Z"}
         if intake == 0 :#left
             self.marker[1] -= 1
             if self.overlapCheck():
@@ -265,8 +285,6 @@ class Game:
                 hold = self.hold
                 if hold == None:
                     self.hold = self.piece
-                    if len(self.bag) == 0:
-                        self.bag = self.newBag()
                     self.piece = self.bag.pop()
                 else:
                     self.hold = self.piece
@@ -274,6 +292,8 @@ class Game:
                     self.marker = [0,5]
         elif intake == 7:#rotate 180
             self.rotation += 2
+        self.coords = self.orientation()
+        self.checkValid()
         #mechanism for slowly falling, time based solution is inefficient for ML
         self.coords = self.orientation()
         touching = self.checkTouching()
@@ -287,23 +307,19 @@ class Game:
         if(touching):
             #print(f'touched {self.touched} times')
             self.touched += 1
-        if (self.touched == 3):
-            self.checkValid()
+        if (self.touched >= 3):
             self.setPiece()
-            return
-        self.checkValid()
+        if self.running:
+            assert self.xSetter(self.marker[1])
 
     def checkTouching(self):#checks if tetrimino is touching something form the bottom
         for y,x in self.coords:
-            try:
-                if y + 1 < 0:
-                    continue
-                if y == 19:
-                    return True
-                if self.board[y+1][x] == 2:
-                    return True
-            except IndexError as e:
+            if y + 1 < 0:
                 continue
+            if y == 19:
+                return True
+            if self.board[y+1][x] == 2:
+                return True
         return False
 
     def drawBoard(self,prin = True):
