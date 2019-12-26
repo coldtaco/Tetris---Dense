@@ -77,7 +77,8 @@ def findLowest(upperBound, lowerBound, function, delta = 0.01 ,startingPoints = 
         if abs(m1) < abs(m2) :
             newX = pointsY[0][0] - m1
         else:
-            newX = pointsY[0][0] - m1
+            newX = pointsY[0][0] - m2
+        #print(f"gradient = {}")
         if checkVal(upperBound, lowerBound, newX):
             addPoint((newX,function(newX)))
         else:
