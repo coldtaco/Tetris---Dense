@@ -47,12 +47,12 @@ def checkVal(upperBound, lowerBound, val):
         return False
     return True
 
-def findLowest(upperBound, lowerBound, function, delta = 0.01 ):
-    addPoint((upperBound, function(upperBound)))
-    addPoint((lowerBound, function(lowerBound)))
-    addPoint(((upperBound+lowerBound)/2,function(upperBound+lowerBound)/2))
+def findLowest(upperBound, lowerBound, function, delta = 0.01 ,startingPoints = 3):
+    step = (upperBound - lowerBound)/ (startingPoints - 1)
+    for x in range(startingPoints):
+        addPoint((lowerBound + step * x,function(lowerBound + step * x)))
     while abs(pointsY[0][0] - pointsY[1][0]) > delta:
-        if len(testedX) > 50:
+        '''if len(testedX) > 50:
             print("greater than 50")
             std = statistics.stdev(testedX)
             mean = statistics.mean(testedX)
@@ -63,7 +63,7 @@ def findLowest(upperBound, lowerBound, function, delta = 0.01 ):
             if std + mean < upperBound:
                 print("changed upper bound")
                 input()
-                upperBound = std + mean
+                upperBound = std + mean'''
         print(f"delta = {abs(pointsY[0][0] - pointsY[1][0])}")
         lowestXInd = findClosests()
         if lowestXInd == 0 or lowestXInd == len(pointsX)-1:
@@ -87,7 +87,7 @@ def findLowest(upperBound, lowerBound, function, delta = 0.01 ):
     print(f"error = {abs(pointsY[0][0] - pointsY[1][0])}")
     print(f"lowest point of function is at x = {pointsY[0][0]}, with y = {pointsY[0][1]}")
 try:
-    findLowest(-.5,10,f)
+    findLowest(-.5,10,f,startingPoints=11)
 except (Exception,KeyboardInterrupt) as e:
     traceback.print_exc()
     print(str(pointsY))
