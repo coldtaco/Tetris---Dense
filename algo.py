@@ -7,7 +7,6 @@ from operator import itemgetter
 import time
 linux = False
 
-multiprocessing.freeze_support()
 if sys.platform == "linux" or sys.platform == "linux2":
     import curses
     linux = False
@@ -111,7 +110,7 @@ def moveOrder(bestMove,game,hold=False):
             moves.append(1)
     moves.append(4)
     return moves
-playGame()
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
+    playGame()
