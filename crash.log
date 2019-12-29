@@ -9,20 +9,23 @@
           
           
           
-          
-          
-          
-          
-          
-          
-          
-          
-          
-((20, 4), (20, 5), (21, 5), (21, 6))[20, 5]5<bound method Game.orientation of <tetris.Game object at 0x000001A3D4AD2F60>>list index out of rangeTraceback (most recent call last):
-  File "C:\Users\Yuhan\Desktop\Tetris - Dense\tetris.py", line 155, in play
+  ##      
+  ## ##   
+   #######
+ ####  # #
+###### # #
+#  #######
+# ########
+##### ####
+##  ### ##
+((-2, 6), (-2, 5), (-2, 4), (-3, 5))
+[-2, 0]
+2
+0x value was -1((-2, 1), (-2, 0), (-2, -1), (-3, 0))Traceback (most recent call last):
+  File "c:\Users\Yuhan\Desktop\Tetris - Dense\tetris.py", line 167, in play
     self.move(intake)
-  File "C:\Users\Yuhan\Desktop\Tetris - Dense\tetris.py", line 253, in move
-    self.setPiece()
-  File "C:\Users\Yuhan\Desktop\Tetris - Dense\tetris.py", line 140, in setPiece
-    self.board[y][x] = 2
-IndexError: list index out of range
+  File "c:\Users\Yuhan\Desktop\Tetris - Dense\tetris.py", line 276, in move
+    self.hardDrop()
+  File "c:\Users\Yuhan\Desktop\Tetris - Dense\tetris.py", line 190, in hardDrop
+    assert x >= 0, "x value was " + str(x) + str(orientation)
+AssertionError: x value was -1((-2, 1), (-2, 0), (-2, -1), (-3, 0))
