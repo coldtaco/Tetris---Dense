@@ -14,6 +14,8 @@ class Species:
         self.batch = self.batchSize()
         self.cleared = 0
         self.hiddenScore = 0
+        self.reinTempList = []
+        self.decay = 0.7
 
     def batchSize(self):
         length = len(self.output)
@@ -49,7 +51,7 @@ class Species:
         self.create()
         
     def create(self):
-        earlyStop = keras.callbacks.EarlyStopping(monitor='loss', min_delta=0.001, patience=9, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
+        earlyStop = keras.callbacks.EarlyStopping(monitor='loss', min_delta=0.001, patience=9, verbose=0, mode='min', baseline=None, restore_best_weights=False)
         rlr = keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.2,patience=7, min_lr=1e-6, mode='auto', verbose=1)
         self.base.fit(np.array(self.intake,dtype='float32'),np.array(self.output,dtype='float32'),validation_split=0.10, epochs=1000, batch_size=self.batch, verbose=2,callbacks=[earlyStop,rlr])
         if isinstance(self.intake,np.ndarray):
@@ -60,14 +62,14 @@ class Species:
         
     def predict(self,intake):
         self.intake.append(intake)
-        predict = self.base.predict(np.array([intake]))
+        predict = self.base.predict(np.array([intake]))[0]
         if random.choice(range(self.mChance)) == 0:
             rand = random.randint(0,7)
             temp = [0,0,0,0,0,0,0,0]
             temp[rand]=1
             self.output.append(temp)
             return rand
-        self.output.append(predict.tolist()[0])
+        self.output.append(predict.tolist())
         return np.argmax(predict)
 
     def addScores(self,game):
@@ -81,6 +83,31 @@ class Species:
 
     def reset(self):
         self.score = 0
+
+    def reinPred(self,intake):
+        self.intake.append(intake)
+        predict = self.base.predict(np.array([intake]))[0]
+        if self.mChance > 0:
+            if random.choice(range(self.mChance)) == 0:
+                rand = random.randint(0,7)
+                self.reinTempList.append(rand)
+                return rand
+        self.reinTempList.append(np.argmax(predict))
+        return np.argmax(predict)
+
+    def reinPredNext(self,score):
+        length = len(self.reinTempList)
+        for i,x in enumerate(self.reinTempList):
+            lst = [0,0,0,0,0,0,0,0]
+            lst[x] = score*(self.decay**(length - i))
+            self.output.append(lst)
+        self.reinTempList = []
+
+    def save(self, name): #used to save reinforcement learning model
+        print('Backing up...')
+        np.save('saves/inputsr',np.array(self.intake))
+        np.save('saves/outputsr',np.array(self.output))
+        self.base.save('saves/pr.h5')
 
 class Generation:
     def __init__(self,base,mChance):
