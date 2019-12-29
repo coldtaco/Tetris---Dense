@@ -2,16 +2,22 @@ from tetris import Game
 from tetrisFunctions import getScore, printBoard
 import sys
 import copy
+import multiprocessing
+from operator import itemgetter
+import time
 linux = False
+
 if sys.platform == "linux" or sys.platform == "linux2":
     import curses
-    linux = True
-
+    linux = False
+d = {0 : 2, 1 : 1, 2 : 4, 3 : 4, 4 : 4, 5 : 2, 6 : 2}
+#possible rotations for each block
 def bestMove(board,piece):
     game = Game()
     bestScore = -10e6
     bestMove = None
-    for rotation in range(4):#rotation
+    combinations = []
+    for rotation in range(d[piece]):#rotation
         leftest = 0
         rightest = 0
         game.rotation = rotation
@@ -22,28 +28,40 @@ def bestMove(board,piece):
                 leftest = game.marker[1] - x
             elif x - game.marker[1] > rightest:
                 rightest = x - game.marker[1]
-        for x in range(0+leftest,len(board[0])-rightest):
-            game.cleared = 0
-            game.board = copy.deepcopy(board)
-            game.rotation = rotation
-            game.marker[1] = x
-            game.piece = piece
-            assert game.cleared == 0
-            game.train(4)
-            score = getScore(game,0)
-            if score > bestScore:
-                bestScore = score
-                bestMove = (rotation,x)
-    return (bestScore,bestMove)
+        #print(f'leftest = {leftest},rightest = {rightest}', end = '')
+        assert(len(board[0]) == 10)
+        for x in range(leftest,len(board[0])-rightest):
+            combinations.append((board,rotation,x,piece,game))
+    #results = map(multiWrapper,combinations)
+    #return sorted(results,key = itemgetter(0))[-1]
+    with multiprocessing.Pool() as pool:
+        results = pool.map(multiWrapper,combinations)
+        return sorted(results,key = itemgetter(0))[-1]
+
+def multiWrapper(args):
+    return checkReward(*args)
+
+def checkReward(board,rotation,x,piece,game):
+    game.cleared = 0
+    game.board = copy.deepcopy(board)
+    game.rotation = rotation
+    game.marker[1] = x
+    game.piece = piece
+    assert game.cleared == 0
+    game.train(4)
+    score = getScore(game,0)
+    return (score,(rotation,x))
+
 
 def playGame():
     total = 0
-    for x in range(1):
+    for x in range(10):
         piece = 0
         cleared = 0
         game = Game()
         if linux:
             stdscr = curses.initscr()
+            pass
         game.train(6)
         while game.running:
             s1,m1 = bestMove(copy.deepcopy(game.board),game.piece)
@@ -53,8 +71,10 @@ def playGame():
                 if linux:
                     printBoard(game.train(result),stdscr)
                 else:
-                    game.move(result)
+                    game.play(result)
                     print(f'lines cleared {game.cleared},score {game.score}',end = '\r')
+            '''game.rotation, game.marker[1] = m1
+            game.play(4)'''
             piece += 1
         if linux:
             curses.endwin()
@@ -91,4 +111,6 @@ def moveOrder(bestMove,game,hold=False):
     moves.append(4)
     return moves
 
-playGame()
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    playGame()
