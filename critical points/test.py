@@ -1,6 +1,7 @@
 import traceback
 import math
 import statistics
+import random
 
 class Point():
     def __init__(self,x,y):
@@ -51,18 +52,22 @@ def findClosests():
         
 
 def checkVal(upperBound, lowerBound, val):
-    return not (val < upperBound or val > lowerBound)
+    return not (val > upperBound or val < lowerBound)
     if val < upperBound or val > lowerBound:
         return False
     return True
 
-gradientMagnitude = 0.01
+
 def findLowest(upperBound, lowerBound, function, delta = 0.01 ,startingPoints = 3):
+    gradientMagnitude = 0.05
     step = (upperBound - lowerBound)/ (startingPoints - 1)
     for x in range(startingPoints):
         addPoint((lowerBound + step * x,function(lowerBound + step * x)))
     iterations = startingPoints
+    X = []
+    Y = []
     while abs(pointsY[0][0] - pointsY[1][0]) > delta:
+        print(iterations,gradientMagnitude)
         iterations += 1
         #print(f"delta = {abs(pointsY[0][0] - pointsY[1][0])}")
         lowestXInd = findClosests()
@@ -79,12 +84,19 @@ def findLowest(upperBound, lowerBound, function, delta = 0.01 ,startingPoints = 
         else:
             newX = pointsY[0][0] - m2*gradientMagnitude
         #print(f"gradient = {m1 if abs(m1) < m2 else abs(m2)}")
+        print(p2[0],p1[0],newX)
         if checkVal(p2[0], p1[0], newX):
             addPoint((newX,function(newX)))
+            X.append(newX)
+            Y.append(function(newX))
         else:
             closerP = p1[0] if abs(m1) < abs(m2) else p2[0]
-            #print(f"trying mid point between {pointsY[0][0]} and {closerP}")
+            print(f"trying mid point between {pointsY[0][0]} and {closerP}")
             addPoint(((pointsY[0][0]+closerP)/2, function((pointsY[0][0]+closerP)/2)))
+            X.append((pointsY[0][0]+closerP)/2)
+            Y.append(function((pointsY[0][0]+closerP)/2))
+    plt.plot(X,Y,'ro-')
+    print(X)
     print(f"3 points took {iterations} iterations with error of {abs(pointsY[0][0] - pointsY[1][0])}")
     print(f"lowest point for 3 point method is ({pointsY[0][0]}, {pointsY[0][1]})")
 #check y value, if not 
@@ -94,48 +106,81 @@ def pointGradient(p1,p2):
     return (p2.y - p1.y)/(p2.x - p1.x)
 
 
-def getNewX(p1,middle,p2,function,delta = 10e-6):
-    if abs(p1.x - middle.x) < delta or abs(middle.x - p2.x) < delta:
-        return middle
-    m1,m2 = gradient(p1,middle), gradient(p2,middle)
-    if abs(m1) < abs(m2) :
-        newX = middle.x - m1*gradientMagnitude
-    else:
-        newX = middle.x - m2*gradientMagnitude
-    if not (newX < p2[0] or newX > p1[0]):
-        newY = function(newX)
-        return getNewX()
-        addPoint((newX,function(newX)))
-    else:
-        closerP = p1[0] if abs(m1) < abs(m2) else p2[0]
-        addPoint(((pointsY[0][0]+closerP)/2, function((pointsY[0][0]+closerP)/2)))
-
 def twoPoints(p1,p2,lowerBound, upperBound, function, delta = 10e-6):
     iterations = 0
-    gradientMagnitude = 0.5
-    while abs(p1.x - p2.x) > delta:
-        iterations += 1
-        m = pointGradient(p1,p2)
-        if m == 0:
-            p2 = Point((p1.x+p2.x)/2, function((p1.x+p2.x)/2))
-        if p1.y < p2.y:
-            p2 = Point(p1.x- m*gradientMagnitude, function(p1.x- m*gradientMagnitude))
-        else:
-            p1 = Point(p2.x- m*gradientMagnitude, function(p2.x- m*gradientMagnitude))
-        #print(f"points are {p1}, {p2}")
+    gradientMagnitude = .6
+    X = []
+    Y = []
+    try:
+        while abs(p1.x - p2.x) > delta :
+            #print(f"points are {p1}, {p2}")
+            iterations += 1
+            m = pointGradient(p1,p2)
+            if abs(m) < 10e-6:
+                p2 = Point((p1.x+p2.x)/2, function((p1.x+p2.x)/2))
+                print("trying mid point")
+                continue
+            #adjustment = math.atan(m/(iterations**(.5)/3))*gradientMagnitude*(abs(p2.x-p1.x)**(1/3))#/(upperBound - lowerBound))*abs(p2.x-p1.x)
+            adjustment = math.atan(m/(iterations/10))*gradientMagnitude*(abs(p2.x-p1.x)**(1/3))
+            #print(m)
+            #print(f"adjustment = {math.tanh(m)} * {gradientMagnitude} * {abs(p2.x-p1.x)**(1/3)} = {adjustment}")
+            if p1.y < p2.y:
+                p2 = Point(p1.x- adjustment, function(p1.x- adjustment))
+                '''if (p2.x < lowerBound) or p2.x > upperBound:
+                    break'''
+                X.append(p2.x), Y.append(p2.y)
+            else:
+                p1 = Point(p2.x- adjustment, function(p2.x- adjustment))
+                '''if (p1.x < lowerBound) or p1.x > upperBound:
+                    break'''
+                X.append(p1.x), Y.append(p1.y)
+            #print(f"points are {p1}, {p2}")
+            #print("")
+    except:
+        pass
+    plt.plot(X,Y,"bo-")
+    print(abs(p1.x - p2.x) > delta ,p1.x >= lowerBound , p2.x <= upperBound)
     print(f"2 points took {iterations} iterations with error of {abs(p1.x - p2.x)}")
     return p1 if p1.y < p2.y else p2
 
 def f(x):
-    return x**2
-    #return x**2 #- 5*x**3 + x**4
+    #return math.atan(x)
+    return x**2 - 5*x**3 + 2*x**4
+
+def binary(lowerBound,upperBound,function, delta=10e-6):
+    r = function(upperBound)
+    iterations = 0
+    X=[]
+    Y=[]
+    while abs(lowerBound - upperBound) > delta:
+        print(lowerBound,upperBound)
+        r1,r2 = function(lowerBound), function(upperBound)
+        if r1 < r2:
+            upperBound = (lowerBound + upperBound)/2
+            X.append(upperBound)
+            Y.append(function(upperBound))
+        else:
+            lowerBound = (lowerBound + upperBound)/2
+            X.append(lowerBound)
+            Y.append(function(lowerBound))
+        iterations += 1
+    plt.plot(X,Y,'m-')
+    print(f"lowest point for binary point method is {upperBound} or {lowerBound}")
+    print(f"binary points took {iterations} iterations with error of {abs(upperBound - lowerBound)}")
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    import numpy as np
     try:
-        x1, x2 = -99000,10000
+        x1, x2 = -9,10
+        x = np.linspace(int(x1),int(x2),int(x2 - x1)*10)
+        y = np.array([f(_) for _ in x])
+        plt.plot(x,y,'k')
         delta = 10e-6
-        findLowest(x1,x2,f,startingPoints=4,delta = delta)
+        #findLowest(x1,x2,f,startingPoints=3,delta = delta)
         print(f"lowest point for 2 point method is {twoPoints(Point(x1,f(x1)),Point(x2,f(x2)),x1,x2,f,delta = delta)}")
+        binary(x1,x2,f)
+        plt.show()
     except (Exception,KeyboardInterrupt) as e:
         traceback.print_exc()
         print(str(pointsY))
