@@ -5,3 +5,8 @@ temp.py
 temp.py
 __pycache__/scoring.cpython-37.pyc
 __pycache__/scoring.cpython-37.pyc
+__pycache__/scoring.cpython-38.pyc
+*.pyc
+algo.log
+crash.log
+critical points/__pycache__/test.cpython-38.pyc
