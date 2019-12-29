@@ -165,6 +165,7 @@ class Game:
             sys.exit()
     
     def hardDrop(self):
+<<<<<<< Updated upstream
             orientation = self.orientation()
             lowest = {}
             lowestPosition = -2
@@ -195,6 +196,40 @@ class Game:
                         self.score = (19 - lowestPosition- self.marker[0])*2
                         self.marker[0] = 19 - lowestPosition
                         return
+=======
+        #TODO find first occurance of digit, add to lowest and get closest to top
+        orientation = self.orientation()
+        lowest = {}
+        lowestPosition = -2
+        for y,x in orientation:
+            assert y <= 19, "y value was " + str(y) + str(orientation)
+            assert x >= 0, "x value was " + str(x) + str(orientation)
+            assert x <= 9, "x value was " + str(x) + str(orientation)
+            if x in lowest:
+                lowest[x] = y - self.marker[0] if lowest[x] < y - self.marker[0] else lowest[x]
+            else:
+                lowest[x] = y - self.marker[0]
+            lowestPosition = y if lowestPosition < y else lowestPosition
+        lowestPosition -= self.marker[0]
+        keys = list(lowest.keys())
+        y_ = self.marker[0] 
+        for y in range(len(self.board)+2):
+            if lowest[x] + y < 0:
+                continue
+            for x in keys:
+                assert y >= 0, "y value was " + str(y) + " lowest[x] + y = " + str(lowest[x] + y) + " " + str(orientation)
+                assert y <= 19, "y value was " + str(y) + " lowest[x] + y = " + str(lowest[x] + y) + " " + str(orientation)
+                assert x >= 0, "x value was " + str(x) + " lowest[x] + y = " + str(lowest[x] + y) + " " + str(orientation)
+                assert x <= 9, "x value was " + str(x) + " lowest[x] + y = " + str(lowest[x] + y) + " " + str(orientation)
+                if lowest[x]+y >= 19 :
+                    self.score += (19 - lowestPosition- self.marker[0])*2
+                    self.marker[0] = 19 - lowestPosition
+                    return
+                if self.board[lowest[x]+y+1][x] == 2:
+                    self.score += (y - self.marker[0] - 1)*2
+                    self.marker[0] = y
+                    return
+>>>>>>> Stashed changes
 
     def dBoard(self,crash):
         tempBoard = copy.deepcopy(self.board)
