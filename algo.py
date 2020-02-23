@@ -5,7 +5,28 @@ import copy
 import multiprocessing
 from operator import itemgetter
 import time
+import numpy as np
 linux = False
+import pickle
+
+class nnInput:
+
+    def __init__(self):
+        self.scoreBoard = np.zeros((4,10))
+
+    def setBoard(self,board):
+        self.board = board
+
+    def setPiece(self,piece):
+        self.piece = piece
+    
+    def setScore(self, vals):
+        #score,(rotation,x)
+        for val in vals:
+            score , rx = val
+            rotation, xVal = rx
+            self.scoreBoard[rotation,xVal] = score
+            #score higher the better
 
 if sys.platform == "linux" or sys.platform == "linux2":
     import curses
@@ -14,8 +35,6 @@ d = {0 : 2, 1 : 1, 2 : 4, 3 : 4, 4 : 4, 5 : 2, 6 : 2}
 #possible rotations for each block
 def bestMove(board,piece):
     game = Game()
-    bestScore = -10e6
-    bestMove = None
     combinations = []
     for rotation in range(d[piece]):#rotation
         leftest = 0
@@ -36,7 +55,13 @@ def bestMove(board,piece):
     #return sorted(results,key = itemgetter(0))[-1]
     with multiprocessing.Pool() as pool:
         results = pool.map(multiWrapper,combinations)
-        return sorted(results,key = itemgetter(0))[-1]
+    inp = nnInput()
+    inp.setBoard(copy.deepcopy(board))
+    inp.setPiece(piece)
+    inp.setScore(results)
+    with open('inputs/inputs.pkl','ab') as file:
+        pickle.dump(inp,file)
+    return sorted(results,key = itemgetter(0))[-1]
 
 def multiWrapper(args):
     return checkReward(*args)
